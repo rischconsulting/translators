@@ -1,5 +1,6 @@
 (function () {
   let initialized = false;
+  let initAttempts = 0;
   const HTML_NS = 'http://www.w3.org/1999/xhtml';
 
   function byId(id) {
@@ -18,6 +19,10 @@
 
   function getBridge() {
     return Zotero?.IndigoBookCSLMBridge || null;
+  }
+
+  function hasPaneDOM() {
+    return !!byId('ibcslm-prefpane') && !!byId('ibcslm-body');
   }
 
   function setStatus(message, isError) {
@@ -120,7 +125,10 @@
           refresh();
           return;
         }
-        const ok = bridge.upsertSecondaryAbbreviation(row.key, input.value);
+        const activeInput = tdVal.querySelector('input');
+        const activeButton = tdVal.querySelector('button');
+        const currentValue = (activeInput?.value ?? activeButton?.textContent ?? row.value ?? '').toString();
+        const ok = bridge.upsertSecondaryAbbreviation(row.key, currentValue);
         setStatus(ok ? 'Override saved.' : 'Could not save override.', !ok);
         refresh();
       });
@@ -140,6 +148,7 @@
     const bridge = getBridge();
     if (!bridge) return [];
     const all = bridge.listSecondaryAbbreviations() || [];
+    debug(`prefs pane loaded ${all.length} total abbreviations from bridge`);
     const q = (byId('ibcslm-search')?.value || '').trim().toLowerCase();
     if (!q) return all;
     return all.filter((row) => {
@@ -201,14 +210,26 @@
 
   function init() {
     if (initialized) return;
+    if (!hasPaneDOM()) {
+      debug(`prefs pane init deferred: DOM not ready (attempt ${initAttempts + 1})`);
+      scheduleInit();
+      return;
+    }
     initialized = true;
     debug('prefs pane init');
     bindEvents();
     refresh();
   }
 
-  window.addEventListener('load', init, { once: true });
-  if (document.readyState !== 'loading') {
-    init();
+  function scheduleInit() {
+    if (initialized) return;
+    initAttempts += 1;
+    if (initAttempts > 20) {
+      debug('prefs pane init gave up waiting for DOM');
+      return;
+    }
+    setTimeout(init, 50);
   }
+
+  scheduleInit();
 })();
