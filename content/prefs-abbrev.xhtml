@@ -2,31 +2,40 @@
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
   xmlns:html="http://www.w3.org/1999/xhtml">
   <vbox class="main-section">
-    <groupbox aria-label="IndigoBook CSL-M Secondary Abbreviations">
+    <groupbox aria-label="IndigoBook CSL-M Preferences">
       <label>
-        <html:h2>Secondary Abbreviations (US)</html:h2>
+        <html:h2>IndigoBook Preferences</html:h2>
       </label>
 
-      <html:p class="ibcslm-muted">Edit or add container-title abbreviations used as secondary lookups. Click an abbreviation to edit it. Changes are stored in Zotero preferences.</html:p>
+      <html:p class="ibcslm-muted">Choose a dataset, then filter, edit, override, or revert rows. Click a value to edit in place.</html:p>
 
       <html:div class="ibcslm-row">
+        <html:select id="ibcslm-dataset">
+          <html:option value="journals:secondary-us-bluebook">Journals: secondary-us-bluebook</html:option>
+          <html:option value="jurisdiction:primary-us">Jurisdiction: primary-us</html:option>
+          <html:option value="jurisdiction:auto-us">Jurisdiction: auto-us</html:option>
+          <html:option value="jurisdiction:juris-us-map">Jurisdiction: juris-us-map</html:option>
+        </html:select>
         <html:input id="ibcslm-search" type="text" placeholder="Filter abbreviations" />
-        <html:button id="ibcslm-reset" type="button">Reset User Overrides</html:button>
+        <html:button id="ibcslm-reset" type="button">Reset Overrides</html:button>
       </html:div>
 
-      <html:div class="ibcslm-row">
-        <html:input id="ibcslm-new-key" type="text" placeholder="New key (e.g., harvard journal of law)" />
-        <html:input id="ibcslm-new-value" type="text" placeholder="Abbreviation (e.g., Harv. J.L.)" />
+      <html:div class="ibcslm-row ibcslm-j-add-row">
+        <html:input id="ibcslm-j-jur" type="text" placeholder="jurisdiction (e.g., us or default)" />
+        <html:input id="ibcslm-j-cat" type="text" placeholder="category (e.g., container-title)" />
+        <html:input id="ibcslm-j-key" type="text" placeholder="key" />
+        <html:input id="ibcslm-j-value" type="text" placeholder="value" />
         <html:button id="ibcslm-add" type="button">Add / Update</html:button>
       </html:div>
 
-      <html:table id="ibcslm-table">
+      <html:table id="ibcslm-table" class="ibcslm-table">
         <html:thead>
           <html:tr>
-            <html:th style="width:35%">Key</html:th>
-            <html:th style="width:45%">Abbreviation</html:th>
-            <html:th style="width:10%">Source</html:th>
-            <html:th style="width:10%">Action</html:th>
+            <html:th class="col-jur">Jurisdiction</html:th>
+            <html:th class="col-cat">Category</html:th>
+            <html:th class="col-key">Key</html:th>
+            <html:th class="col-value">Value</html:th>
+            <html:th class="col-action">Action</html:th>
           </html:tr>
         </html:thead>
         <html:tbody id="ibcslm-body"></html:tbody>

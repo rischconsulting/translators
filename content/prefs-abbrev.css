@@ -3,47 +3,83 @@
   gap: 8px;
   align-items: center;
   margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
 .ibcslm-row input {
   flex: 1;
-  min-width: 160px;
+  min-width: 120px;
+}
+
+#ibcslm-dataset {
+  min-width: 230px;
 }
 
 #ibcslm-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 #ibcslm-table th,
 #ibcslm-table td {
   border-bottom: 1px solid #d0d0d0;
-  padding: 6px 8px;
+  padding: 4px 6px;
   text-align: left;
   vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.col-jur {
+  width: 15%;
+}
+
+.col-cat {
+  width: 15%;
+}
+
+.col-key {
+  width: 25%;
+}
+
+.col-value {
+  width: 35%;
+}
+
+.col-action {
+  width: 10%;
 }
 
 #ibcslm-table tbody tr:hover {
   background: #f3f7ff;
 }
 
+#ibcslm-table td button {
+  white-space: nowrap;
+}
+
 .ibcslm-key {
   font-family: ui-monospace, Menlo, Consolas, monospace;
+  white-space: nowrap;
 }
 
 .ibcslm-source {
-  font-size: 0.9em;
+  font-size: 0.85em;
   opacity: 0.8;
 }
 
 .ibcslm-inline-value {
   width: 100%;
-  padding: 4px 6px;
+  padding: 2px 4px;
   border: 1px solid transparent;
   border-radius: 4px;
   background: transparent;
   text-align: left;
   cursor: text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ibcslm-inline-value:hover,
@@ -56,6 +92,23 @@
 .ibcslm-inline-input {
   width: 100%;
   box-sizing: border-box;
+}
+
+.ibcslm-j-add-row > * {
+  min-width: 100px;
+}
+
+.ibcslm-j-add-row > button {
+  min-width: 96px;
+}
+
+#ibcslm-prefpane.mode-journal .col-jur,
+#ibcslm-prefpane.mode-journal .col-cat,
+#ibcslm-prefpane.mode-journal .cell-jur,
+#ibcslm-prefpane.mode-journal .cell-cat,
+#ibcslm-prefpane.mode-journal #ibcslm-j-jur,
+#ibcslm-prefpane.mode-journal #ibcslm-j-cat {
+  display: none;
 }
 
 .ibcslm-muted {
