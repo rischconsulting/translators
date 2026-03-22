@@ -337,6 +337,11 @@ ${mlzBlock}` : mlzBlock;
       const preferredJur = (jur || "default").toLowerCase();
       const noHints = !!options.noHints;
       const normalizedKey = this.normalizeKey(key);
+      const normalizedKeyNoDots = normalizedKey.replace(/\./g, " ").replace(/\s+/g, " ").trim();
+      const containerTitleKeys = [normalizedKey];
+      if (normalizedKeyNoDots && normalizedKeyNoDots !== normalizedKey) {
+        containerTitleKeys.push(normalizedKeyNoDots);
+      }
       let hit = null;
       if (category === "institution-part") {
         hit = lookupJurChainWithOverrides(
@@ -361,16 +366,18 @@ ${mlzBlock}` : mlzBlock;
         return value ? { jurisdiction: "default", value } : null;
       }
       if (category === "container-title") {
-        hit = lookupJurChainWithOverrides(
-          this._primaryUS?.xdata,
-          this._userJurisdictionOverrides?.["primary-us"],
-          preferredJur === "default" ? "us" : preferredJur,
-          "container-title",
-          normalizedKey
-        );
-        if (hit?.value) return { jurisdiction: hit.jurisdiction || preferredJur, value: hit.value };
-        const secondaryValue = this._lookupSecondaryContainerTitle(normalizedKey);
-        if (secondaryValue) return { jurisdiction: "default", value: secondaryValue };
+        for (const containerTitleKey of containerTitleKeys) {
+          hit = lookupJurChainWithOverrides(
+            this._primaryUS?.xdata,
+            this._userJurisdictionOverrides?.["primary-us"],
+            preferredJur === "default" ? "us" : preferredJur,
+            "container-title",
+            containerTitleKey
+          );
+          if (hit?.value) return { jurisdiction: hit.jurisdiction || preferredJur, value: hit.value };
+          const secondaryValue = this._lookupSecondaryContainerTitle(containerTitleKey);
+          if (secondaryValue) return { jurisdiction: "default", value: secondaryValue };
+        }
         if (!noHints) {
           const fallback = this.abbreviateContainerTitleFallback(key, preferredJur);
           if (fallback) return { jurisdiction: preferredJur === "default" ? "default" : preferredJur, value: fallback };
@@ -1890,7 +1897,7 @@ ${mlzBlock}` : mlzBlock;
             const targetJur = hit.jurisdiction || jur || "default";
             if (!obj[targetJur]) obj[targetJur] = self._newAbbreviationSegments(this);
             if (!obj[targetJur][category]) obj[targetJur][category] = {};
-            obj[targetJur][category][key] = self.abbrevService.parseDirective(hit.value).value;
+            obj[targetJur][category][key] = hit.value;
             self._logRenderProbeFromAbbreviation(category, key, targetJur, noHints, "hit");
             self._logAbbreviation(category, key, targetJur, obj[targetJur][category][key], "hit");
             return targetJur;
