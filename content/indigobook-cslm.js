@@ -2283,6 +2283,69 @@ ${mlzBlock}` : mlzBlock;
 
   // lib/main.mjs
   var _ctx;
+  var BUNDLED_STYLE_FILES = [
+    "jm-indigobook.csl",
+    "jm-indigobook-law-review.csl"
+  ];
+  function _extractStyleID(styleXML) {
+    if (!styleXML) return "";
+    const match = styleXML.match(/<id>\s*([^<]+?)\s*<\/id>/i);
+    return match ? String(match[1]).trim() : "";
+  }
+  function _styleInstallSourceURL(rootURI, relPath) {
+    const base = rootURI?.spec || "";
+    return base ? `${base}${relPath}` : relPath;
+  }
+  async function _installStyleIfMissing({ rootURI, dataStore, relPath }) {
+    const styleXML = await dataStore.loadText(relPath);
+    const styleID = _extractStyleID(styleXML);
+    if (!styleID) {
+      try {
+        Zotero.debug(`[IndigoBook CSL-M] style install skipped (missing id): ${relPath}`);
+      } catch (e) {
+      }
+      return;
+    }
+    if (Zotero?.Styles?.get?.(styleID)) {
+      try {
+        Zotero.debug(`[IndigoBook CSL-M] style already installed: ${styleID}`);
+      } catch (e) {
+      }
+      return;
+    }
+    const installFn = Zotero?.Styles?.install;
+    if (typeof installFn !== "function") {
+      try {
+        Zotero.debug(`[IndigoBook CSL-M] style install unavailable (no Zotero.Styles.install): ${styleID}`);
+      } catch (e) {
+      }
+      return;
+    }
+    const sourceURL = _styleInstallSourceURL(rootURI, relPath);
+    let installed = false;
+    try {
+      await installFn.call(Zotero.Styles, styleXML, sourceURL);
+      installed = !!Zotero?.Styles?.get?.(styleID);
+    } catch (e) {
+    }
+    try {
+      Zotero.debug(`[IndigoBook CSL-M] style ${installed ? "installed" : "install failed"}: ${styleID}`);
+    } catch (e) {
+    }
+  }
+  async function _ensureBundledStylesInstalled({ rootURI, dataStore }) {
+    for (const file of BUNDLED_STYLE_FILES) {
+      const relPath = `styles/${file}`;
+      try {
+        await _installStyleIfMissing({ rootURI, dataStore, relPath });
+      } catch (e) {
+        try {
+          Zotero.debug(`[IndigoBook CSL-M] style install error (${relPath}): ${String(e)}`);
+        } catch (_) {
+        }
+      }
+    }
+  }
   async function activate({ id, version, rootURI }) {
     _ctx = {
       id,
@@ -2295,6 +2358,7 @@ ${mlzBlock}` : mlzBlock;
       prefsUI: null
     };
     await _ctx.data.init();
+    await _ensureBundledStylesInstalled({ rootURI, dataStore: _ctx.data });
     _ctx.modules = new ModuleLoader({ rootURI, dataStore: _ctx.data });
     await _ctx.modules.preload();
     _ctx.abbrevs = new AbbrevService({ dataStore: _ctx.data });
