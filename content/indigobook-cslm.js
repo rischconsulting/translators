@@ -1013,6 +1013,7 @@ ${mlzBlock}` : mlzBlock;
       this._jurisdictionRowID = "ibcslm-jurisdiction-row";
       this._customCourtRowID = "ibcslm-custom-court-row";
       this._syncInFlight = /* @__PURE__ */ new Set();
+      this._journalAbbrByContainerTitleKey = /* @__PURE__ */ new Map();
     }
     patch() {
       this._patchRetrieveItem();
@@ -1027,6 +1028,7 @@ ${mlzBlock}` : mlzBlock;
       this._unregisterCaseReporterSync();
       this._unpatchInfoBoxRender();
       this._unpatchItemPaneRender();
+      this._journalAbbrByContainerTitleKey.clear();
       const sysProto = Zotero?.Cite?.System?.prototype;
       if (sysProto) {
         if (this._orig.retrieveItem) sysProto.retrieveItem = this._orig.retrieveItem;
@@ -1766,6 +1768,23 @@ ${mlzBlock}` : mlzBlock;
           if (containerTitle) cslItem["container-title"] = containerTitle;
           else this._logField("missing-container-title-source", `itemType=${String(cslItem.type)} title=${String(cslItem.title || "")}`);
         }
+        const journalAbbr = String(
+          zotItem.getField?.("journalAbbreviation") || zotItem.getField?.("journalAbbr") || ""
+        ).trim();
+        if (journalAbbr) {
+          const normalizedContainerTitle = this.abbrevService.normalizeKey(cslItem["container-title"] || "");
+          if (normalizedContainerTitle) {
+            this._journalAbbrByContainerTitleKey.set(normalizedContainerTitle, journalAbbr);
+          }
+          const hadShort = !!String(cslItem["container-title-short"] || "").trim();
+          cslItem["container-title-short"] = journalAbbr;
+          this._logShortForm(
+            "container-title",
+            cslItem["container-title"] || "",
+            cslItem["container-title-short"],
+            hadShort ? "journal-abbr-override" : "journal-abbr"
+          );
+        }
         if (!cslItem.authority) {
           const court = String(zotItem.getField?.("court") || "").trim();
           if (court) {
@@ -1892,6 +1911,18 @@ ${mlzBlock}` : mlzBlock;
         self._logRenderProbeFromAbbreviation(category, key, jurisdiction || origJurisdiction || "default", noHints, "pre");
         try {
           const jur = (jurisdiction || origJurisdiction || "default").toLowerCase();
+          if (category === "container-title") {
+            const normalizedContainerTitle = self.abbrevService.normalizeKey(key);
+            const journalAbbr = self._journalAbbrByContainerTitleKey.get(normalizedContainerTitle);
+            if (journalAbbr) {
+              if (!obj[jur]) obj[jur] = self._newAbbreviationSegments(this);
+              if (!obj[jur][category]) obj[jur][category] = {};
+              obj[jur][category][key] = journalAbbr;
+              self._logRenderProbeFromAbbreviation(category, key, jur, noHints, "journal-abbr");
+              self._logAbbreviation(category, key, jur, journalAbbr, "journal-abbr");
+              return jur;
+            }
+          }
           const hit = self.abbrevService.lookupForCiteProc(category, key, jur, { noHints });
           if (hit?.value) {
             const targetJur = hit.jurisdiction || jur || "default";
